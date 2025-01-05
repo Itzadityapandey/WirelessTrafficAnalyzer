@@ -1,8 +1,4 @@
 
-
-Here’s the formatted content for your `README.md` template:
-
-```markdown
 # Wireless Traffic Analyzer
 
 Wireless Traffic Analyzer is a Python-based GUI application for analyzing and capturing network traffic. The project leverages `Scapy` for packet sniffing and `PyQt6` for an interactive user interface. It provides detailed insights into TCP packets traveling through a selected network interface.
@@ -108,16 +104,6 @@ pip install -r requirements.txt
 
 ---
 
-## 🖼️ Screenshots
-
-- **GUI - Interface Selection**  
-  (Include a screenshot of the dropdown interface selection here)
-
-- **GUI - Live Packet Logs**  
-  (Include a screenshot of captured packet logs here)
-
----
-
 ## 🤝 Contributing
 
 We welcome contributions!
@@ -131,12 +117,6 @@ Feel free to open issues for bug reports or feature requests.
 
 ---
 
-## 📜 License
-
-This project is licensed under the MIT License. See the LICENSE file for details.
-
----
-
 ## 🙋‍♂️ Acknowledgements
 
 - Scapy Documentation
@@ -146,4 +126,3 @@ This project is licensed under the MIT License. See the LICENSE file for details
 Happy coding! 🚀
 ```
 
-This markdown template is ready for your project. Let me know if you need any further adjustments!
