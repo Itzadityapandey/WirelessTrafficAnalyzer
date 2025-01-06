@@ -124,5 +124,3 @@ Feel free to open issues for bug reports or feature requests.
 - Inspired by tools like Wireshark.
 
 Happy coding! 🚀
-```
-
