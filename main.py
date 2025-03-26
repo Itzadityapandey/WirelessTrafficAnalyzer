@@ -6,6 +6,9 @@ from PyQt6.QtWidgets import (
 )
 from PyQt6.QtCore import QThread, pyqtSignal
 from datetime import datetime
+# Add matplotlib imports for graphing
+from matplotlib.backends.backend_qt6agg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
 
 
 class PacketSnifferThread(QThread):
@@ -18,18 +21,24 @@ class PacketSnifferThread(QThread):
         self.running = False
 
     def handle_packet(self, packet):
-        """Handles incoming packets and emits log messages."""
+        """Handles incoming packets and emits log messages with suspicious traffic highlighting."""
         from scapy.layers.inet import TCP, IP
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         if packet.haslayer(TCP) and packet.haslayer(IP):
-            timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             src_ip = packet[IP].src
             dst_ip = packet[IP].dst
             src_port = packet[TCP].sport
             dst_port = packet[TCP].dport
-            log_entry = (
-                f"[{timestamp}] TCP Packet: {src_ip}:{src_port} -> {dst_ip}:{dst_port}\n"
-            )
-            self.packet_captured.emit(log_entry)
+            log_entry = f"[{timestamp}] TCP Packet: {src_ip}:{src_port} -> {dst_ip}:{dst_port}"
+            # Highlight suspicious traffic (unusual ports)
+            common_ports = [80, 443, 22, 53, 21]  # HTTP, HTTPS, SSH, DNS, FTP
+            if dst_port not in common_ports and src_port not in common_ports:
+                log_entry += " [Unusual Port]"
+            self.packet_captured.emit(log_entry + "\n")
+        elif self.verbose:
+            # Log non-TCP/IP packets in verbose mode
+            summary = packet.summary()
+            self.packet_captured.emit(f"[{timestamp}] Non-TCP Packet: {summary}\n")
 
     def run(self):
         """Starts the packet sniffing thread."""
@@ -70,6 +79,12 @@ class PacketSnifferApp(QMainWindow):
         self.log_area = QTextEdit()
         self.log_area.setReadOnly(True)
 
+        # Add matplotlib canvas for real-time graphing
+        self.figure = Figure()
+        self.canvas = FigureCanvas(self.figure)
+        self.ax = self.figure.add_subplot(111)
+        self.packet_times = []  # Store timestamps for graphing
+
         # Add available network interfaces
         self.interface_dropdown.addItems(self.get_available_interfaces())
 
@@ -80,6 +95,7 @@ class PacketSnifferApp(QMainWindow):
         self.layout.addWidget(self.start_button)
         self.layout.addWidget(self.stop_button)
         self.layout.addWidget(self.log_area)
+        self.layout.addWidget(self.canvas)  # Add graph to layout
 
         container = QWidget()
         container.setLayout(self.layout)
@@ -118,6 +134,11 @@ class PacketSnifferApp(QMainWindow):
 
         self.start_button.setEnabled(False)
         self.stop_button.setEnabled(True)
+        # Clear graph when starting
+        self.packet_times.clear()
+        self.ax.clear()
+        self.ax.set_title("Packet Rate Over Time")
+        self.canvas.draw()
 
     def stop_sniffing(self):
         """Stops the packet sniffing process."""
@@ -130,8 +151,20 @@ class PacketSnifferApp(QMainWindow):
         self.stop_button.setEnabled(False)
 
     def update_log(self, message):
-        """Updates the log area with captured packet details."""
+        """Updates the log area and graph with captured packet details."""
         self.log_area.append(message)
+        # Update graph for TCP packets
+        if "TCP Packet" in message:
+            current_time = datetime.now()
+            self.packet_times.append(current_time)
+            if len(self.packet_times) > 100:  # Limit to 100 points for performance
+                self.packet_times.pop(0)
+            self.ax.clear()
+            self.ax.plot(self.packet_times, range(len(self.packet_times)), "b-")
+            self.ax.set_title("Packet Rate Over Time")
+            self.ax.set_xlabel("Time")
+            self.ax.set_ylabel("Packet Count")
+            self.canvas.draw()
 
 
 if __name__ == "__main__":
