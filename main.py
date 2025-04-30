@@ -30,7 +30,7 @@ class PacketSnifferThread(QThread):
             src_port = packet[TCP].sport
             dst_port = packet[TCP].dport
             log_entry = f"[{timestamp}] TCP Packet: {src_ip}:{src_port} -> {dst_ip}:{dst_port}"
-            # Highlight suspicious traffic (unusual ports)
+            # Highlight suspicious traffic (unusual ports) including non active ports
             common_ports = [80, 443, 22, 53, 21]  # HTTP, HTTPS, SSH, DNS, FTP
             if dst_port not in common_ports and src_port not in common_ports:
                 log_entry += " [Unusual Port]"
